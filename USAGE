@@ -1,0 +1,23 @@
+Disconnectome pipeline
+===================
+
+Run Disconnectome pipeline
+
+USAGE
+
+nextflow run disconnectome.nf [OPTIONAL_ARGUMENTS] (--root)
+
+DESCRIPTION
+
+    --root=/path/to/[root]              Root folder containing multiple subjects
+
+                                        [root]
+                                        ├── S1
+                                        |   └── cavity_1.nii.gz (can have a different name)
+                                        |   └── cavity_2.nii.gz (can have a different name)
+                                        └── S2
+                                            └── cavity_1.nii.gz (can have a different name)
+                                            └── cavity_2.nii.gz (can have a different name)
+
+    --atlasFolder                      Path to the atlas folder
+    --tractograms                      Path to the tractograms
