@@ -20,4 +20,27 @@ DESCRIPTION
                                             └── cavity_2.nii.gz (can have a different name)
 
     --atlasFolder                      Path to the atlas folder
+                                       [atlasFolder]
+                                       ├── cortical17
+                                       |   └── 1.nii.gz
+                                       |   └── 2.nii.gz
+                                       |   └── *.nii.gz
+                                       ├── striatal17
+                                       |   └── 1.nii.gz
+                                       |   └── 2.nii.gz
+                                       |   └── *.nii.gz
+                                       ├── thalamic17
+                                       |   └── 1.nii.gz
+                                       |   └── 2.nii.gz
+                                       |   └── *.nii.gz
+                                       ├── LHemisphereMNI.bdo
+                                       ├── RHemisphereMNI.bdo
+                                       ├── MNI152_T1_2mm.nii.gz
+                                       └── MNI152_T1_2mm_brain.nii.gz
+
     --tractograms                      Path to the tractograms
+                                       [tractograms]
+                                       ├── sub-T1
+                                       |   └── *.trk
+                                       └── sub-T2
+                                           └── *.trk
