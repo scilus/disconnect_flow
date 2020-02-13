@@ -40,7 +40,7 @@ DESCRIPTION
 
     --tractograms                      Path to the tractograms
                                        [tractograms]
-                                       ├── sub-T1
+                                       ├── sub-01
                                        |   └── *.trk
-                                       └── sub-T2
+                                       └── sub-02
                                            └── *.trk
