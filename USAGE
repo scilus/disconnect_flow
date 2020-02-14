@@ -44,3 +44,6 @@ DESCRIPTION
                                        |   └── *.trk
                                        └── sub-02
                                            └── *.trk
+
+    --output_dir                        Directory where to write the final results.
+                                        By default, will be in "./results"

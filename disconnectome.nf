@@ -4,6 +4,7 @@ import groovy.json.*
 
 params.root = false
 params.tractograms = false
+params.help = false
 
 if(params.help) {
     usage = file("$baseDir/USAGE")
@@ -71,6 +72,7 @@ sides = params.sides?.tokenize(',')
 
 process README {
     cpus 1
+    publishDir = params.Readme_Publish_Dir
     tag = "README"
 
     output:
@@ -81,6 +83,7 @@ process README {
     for (String item : params) {
         list_options += item + "\n"
     }
+
     """
     echo "Disconnectome pipeline\n" >> readme.txt
     echo "Start time: $workflow.start\n" >> readme.txt
@@ -94,6 +97,7 @@ process README {
 
 process filterCorticoCortical{
   cpus 1
+  publishDir = params.FilterCorticoThalamic_Publish_Dir  
   tag = "Filter Cortico-Cortical"
 
   input:
@@ -117,6 +121,7 @@ process filterCorticoCortical{
 
 process filterCorticoStriatal{
   cpus 1
+  publishDir = params.FilterCorticoStriatal_Publish_Dir
   tag = "Filter Cortical-Striatal"
 
   input:
@@ -141,7 +146,9 @@ process filterCorticoStriatal{
 
 process filterCorticoThalamic{
   cpus 1
+  publishDir = params.FilterCorticoThalamic_Publish_Dir
   tag = "Filter Cortical-Thalamic"
+
 
   input:
     set tid, file(tractogram) from in_tractograms_ct
