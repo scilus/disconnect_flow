@@ -100,7 +100,7 @@ process README {
 
 process filterCorticoCortical{
   cpus 1
-  publishDir = params.FilterCorticoThalamic_Publish_Dir
+  publishDir = params.FilterCorticoCortical_Publish_Dir
   tag = "Filter Cortico-Cortical"
 
   input:
