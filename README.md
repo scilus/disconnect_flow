@@ -1,9 +1,12 @@
 DisconetsFlow:
 
+Example command line:
+```
 nextflow run disconnectome.nf \
         --root disconects_dataset/ \
         --atlasFolder [FullPathTo]/disconect_atlas/ \
         --tractograms [FullPathTo]/disconect_tractograms/ -resume
+```
 
 
 ```
