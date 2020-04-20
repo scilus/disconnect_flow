@@ -17,7 +17,7 @@ nextflow run disconnectome.nf \
         --atlasFolder [FullPathTo]/disconect_atlas_short_version/ \
         --output_dir [FullPathTo]/output/ \
         --resume
-``
+```
 
 
 ```
