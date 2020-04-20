@@ -1,12 +1,23 @@
 DisconetsFlow:
 
-Example command line:
+Example command line (Build filtered tractograms really long):
 ```
 nextflow run disconnectome.nf \
         --root disconects_dataset/ \
         --atlasFolder [FullPathTo]/disconect_atlas/ \
         --tractograms [FullPathTo]/disconect_tractograms/ -resume
 ```
+
+or
+
+```
+nextflow run disconnectome.nf \
+        --root disconects_dataset/ \
+        --filteredTractograms [FullPathTo]/disconets_filtered_tractograms/ \
+        --atlasFolder [FullPathTo]/disconect_atlas_short_version/ \
+        --output_dir [FullPathTo]/output/ \
+        --resume
+``
 
 
 ```

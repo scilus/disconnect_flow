@@ -7,6 +7,15 @@ USAGE
 
 nextflow run disconnectome.nf [OPTIONAL_ARGUMENTS] (--root)
 
+  You can use atlasFolder and tractograms (to rebuild database of filtered tractograms) or filteredTractograms only
+
+nextflow run disconnectome.nf \
+    --root disconects_dataset/ \
+    --filteredTractograms [FullPathTo]/Filters/ \
+    --output_dir [FullPathTo]/output/ \
+    --resume
+
+
 DESCRIPTION
 
     --root=/path/to/[root]              Root folder containing multiple subjects
@@ -19,7 +28,9 @@ DESCRIPTION
                                             └── cavity_1.nii.gz (can have a different name)
                                             └── cavity_2.nii.gz (can have a different name)
 
-    --atlasFolder                      Path to the atlas folder
+
+
+    --atlasFolder                       Absolute path to the atlas folder
                                        [atlasFolder]
                                        ├── cortical17
                                        |   └── 1.nii.gz
@@ -38,12 +49,21 @@ DESCRIPTION
                                        ├── MNI152_T1_2mm.nii.gz
                                        └── MNI152_T1_2mm_brain.nii.gz
 
-    --tractograms                      Path to the tractograms
+    --tractograms                      Absolute path to the tractograms
                                        [tractograms]
                                        ├── sub-01
                                        |   └── *.trk
                                        └── sub-02
                                            └── *.trk
+
+    --filteredTractograms               Absolute path to the filtered tractograms
+                                        [filteredTractograms]
+                                        ├── filterCorticoCortical
+                                        |   └── *_CorticoCortical_*.trk
+                                        ├── filterCorticoStriatal
+                                        |   └── *_CorticoStriatal_*.trk
+                                        └── filterCorticoThalamic
+                                            └── *_CorticoThalamic_*.trk
 
     --output_dir                        Directory where to write the final results.
                                         By default, will be in "./results"

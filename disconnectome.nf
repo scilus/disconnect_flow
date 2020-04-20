@@ -2,10 +2,6 @@
 
 import groovy.json.*
 
-params.root = false
-params.tractograms = false
-params.help = false
-
 if(params.help) {
     usage = file("$baseDir/USAGE")
     engine = new groovy.text.SimpleTemplateEngine()
@@ -57,6 +53,25 @@ if (params.tractograms){
                      flat: true) {it.parent.name}
 }
 
+if (params.filteredTractograms){
+    log.info "Input: $params.filteredTractograms"
+    root = file(params.filteredTractograms)
+    filteredTractograms = Channel
+      .fromFilePairs("$root/**/*trk",
+                      size: 1,
+                      maxDepth:1,
+                      flat: true) {it.simpleName.split('_')}
+
+    filteredTractograms.map{[it].flatten()}.into{find_cc; find_cs; find_ct}
+    find_cc.filter{ it[1] == 'CorticoCortical'}.set{corticocortical_precomputed}
+    find_cs.filter{ it[1] == 'CorticoStriatal'}.set{corticostriatal_precomputed}
+    find_ct.filter{ it[1] == 'CorticoThalamic'}.set{corticothalamic_precomputed}
+
+    corticocortical_precomputed.map{[it[0], it[2], it[3]]}.set{corticocortical_precomputed}
+    corticostriatal_precomputed.map{[it[0], it[2], it[3]]}.set{corticostriatal_precomputed}
+    corticothalamic_precomputed.map{[it[0], it[2], it[3]]}.set{corticothalamic_precomputed}
+}
+
 in_data.into{in_data_cc;
              in_data_ccc;
              in_data_cs;
@@ -64,9 +79,11 @@ in_data.into{in_data_cc;
              in_data_ct;
              in_data_ctc}
 
-in_tractograms.into{in_tractograms_cc;
-                    in_tractograms_cs;
-                    in_tractograms_ct}
+if (params.in_tractograms) {
+  in_tractograms.into{in_tractograms_cc;
+                      in_tractograms_cs;
+                      in_tractograms_ct}
+}
 
 indices_cc = params.indices_cc?.tokenize(',')
 indices_cs = params.indices_cs?.tokenize(',')
@@ -98,79 +115,91 @@ process README {
     """
 }
 
-process filterCorticoCortical{
-  cpus 1
-  publishDir = params.FilterCorticoCortical_Publish_Dir
-  tag = "Filter Cortico-Cortical"
+if (params.in_tractograms_cc){
+    process filterCorticoCortical{
+      cpus 1
+      publishDir = params.FilterCorticoCortical_Publish_Dir
+      tag = "Filter Cortico-Cortical"
 
-  input:
-    set tid, file(tractogram) from in_tractograms_cc
-    each idx from indices_cc
+      input:
+        set tid, file(tractogram) from in_tractograms_cc
+        each idx from indices_cc
 
-  output:
-    set tid, idx, "${tid}_CorticoCortical_${idx}.trk" into corticocortical, corticocorticalcommisural
+      output:
+        set tid, idx, "${tid}_CorticoCortical_${idx}.trk" into corticocortical, corticocorticalcommisural
 
-  when:
-    params.tractogramAtlas==false
+      when:
+        params.tractogramAtlas==false
 
-  script:
-    """
-        scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
-        scil_filter_tractogram.py valid_${tid}_${idx}.trk \
-          ${tid}_CorticoCortical_${idx}.trk \
-          --drawn_roi ${params.atlasFolder}cortical17/${idx}.nii.gz both_ends include
-    """
+      script:
+        """
+            scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
+            scil_filter_tractogram.py valid_${tid}_${idx}.trk \
+              ${tid}_CorticoCortical_${idx}.trk \
+              --drawn_roi ${params.atlasFolder}cortical17/${idx}.nii.gz both_ends include --no_empty
+        """
+    }
 }
 
-process filterCorticoStriatal{
-  cpus 1
-  publishDir = params.FilterCorticoStriatal_Publish_Dir
-  tag = "Filter Cortical-Striatal"
+if (params.in_tractograms_cs){
+      process filterCorticoStriatal{
+        cpus 1
+        publishDir = params.FilterCorticoStriatal_Publish_Dir
+        tag = "Filter Cortical-Striatal"
 
-  input:
-    set tid, file(tractogram) from in_tractograms_cs
-    each idx from indices_cs
+        input:
+          set tid, file(tractogram) from in_tractograms_cs
+          each idx from indices_cs
 
-  output:
-    set tid, idx, "${tid}_CorticoStriatal_${idx}.trk" into corticostriatal, corticostriatalcommisural
+        output:
+          set tid, idx, "${tid}_CorticoStriatal_${idx}.trk" into corticostriatal, corticostriatalcommisural
 
-  when:
-    params.tractogramAtlas==false
+        when:
+          params.tractogramAtlas==false
 
-  script:
-    """
-        scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
-        scil_filter_tractogram.py valid_${tid}_${idx}.trk \
-          ${tid}_CorticoStriatal_${idx}.trk \
-          --drawn_roi ${params.atlasFolder}cortical17/${idx}.nii.gz either_end include \
-          --drawn_roi ${params.atlasFolder}striatal17/${idx}.nii.gz either_end include
-    """
+        script:
+          """
+              scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
+              scil_filter_tractogram.py valid_${tid}_${idx}.trk \
+                ${tid}_CorticoStriatal_${idx}.trk \
+                --drawn_roi ${params.atlasFolder}cortical17/${idx}.nii.gz either_end include \
+                --drawn_roi ${params.atlasFolder}striatal17/${idx}.nii.gz either_end include --no_empty
+          """
+      }
 }
 
-process filterCorticoThalamic{
-  cpus 1
-  publishDir = params.FilterCorticoThalamic_Publish_Dir
-  tag = "Filter Cortical-Thalamic"
+if (params.in_tractograms_ct){
+    process filterCorticoThalamic{
+      cpus 1
+      publishDir = params.FilterCorticoThalamic_Publish_Dir
+      tag = "Filter Cortical-Thalamic"
 
 
-  input:
-    set tid, file(tractogram) from in_tractograms_ct
-    each idx from indices_ct
+      input:
+        set tid, file(tractogram) from in_tractograms_ct
+        each idx from indices_ct
 
-  output:
-    set tid, idx, "${tid}_CorticoThalamic_${idx}.trk" into corticothalamic, corticothalamiccommisural
+      output:
+        set tid, idx, "${tid}_CorticoThalamic_${idx}.trk" into corticothalamic, corticothalamiccommisural
 
-  when:
-    params.tractogramAtlas==false
+      when:
+        params.tractogramAtlas==false
 
-  script:
-    """
-        scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
-        scil_filter_tractogram.py valid_${tid}_${idx}.trk \
-          ${tid}_CorticoThalamic_${idx}.trk \
-          --drawn_roi ${params.atlasFolder}cortical17/${idx}.nii.gz either_end include \
-          --drawn_roi ${params.atlasFolder}thalamic17/${idx}.nii.gz either_end include
-    """
+      script:
+        """
+            scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
+            scil_filter_tractogram.py valid_${tid}_${idx}.trk \
+              ${tid}_CorticoThalamic_${idx}.trk \
+              --drawn_roi ${params.atlasFolder}cortical17/${idx}.nii.gz either_end include \
+              --drawn_roi ${params.atlasFolder}thalamic17/${idx}.nii.gz either_end include --no_empty
+        """
+    }
+}
+
+if (params.filteredTractograms) {
+    corticocortical_precomputed.into{corticocortical; corticocorticalcommisural}
+    corticostriatal_precomputed.into{corticostriatal; corticostriatalcommisural}
+    corticothalamic_precomputed.into{corticothalamic; corticothalamiccommisural}
 }
 
 in_data_cc.combine(corticocortical).set{in_data_corticocortical}
