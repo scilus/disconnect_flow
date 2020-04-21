@@ -215,10 +215,10 @@ process filterLesionCorticoCortical{
     each side from sides
 
   output:
-    set sid, tid, idx, side, "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_${params.minL}.txt" into corticocorticalLesion
+    set sid, tid, idx, side, "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_${params.minL}.txt" into corticocorticalLesion optional true
     set sid, idx into corticocorticalIndices
-    file "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.trk"
-    file "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_${params.minL}.trk"
+    file "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.trk" optional true
+    file "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_${params.minL}.trk" optional true
     file "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_filter.txt"
 
   script:
@@ -228,11 +228,14 @@ process filterLesionCorticoCortical{
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.trk \
                 --filtering_list ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_filter.txt \
-                -f --display_counts > ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.txt
+                -f --no_empty --display_counts > ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.txt --no_empty
 
+  if ${params.filterLength} && [ -f "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.trk" ]
+  then
   scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.trk \
               ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_${params.minL}.trk \
-              --minL ${params.minL} -f --display_counts > ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_${params.minL}.txt
+              --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_${params.minL}.txt
+  fi
   """
 }
 
@@ -241,10 +244,10 @@ process filterLesionCorticoCorticalCommissural{
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticocorticalcommisural
 
   output:
-    set sid, tid, idx, "${sid}_${tid}_CorticoCortical_lesion_${idx}.txt", "${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.txt" into corticocorticalcommisuralLesion
+    set sid, tid, idx, "${sid}_${tid}_CorticoCortical_lesion_${idx}.txt", "${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.txt" into corticocorticalcommisuralLesion optional true
     set sid, idx into corticocorticalcommisuralIndices
-    file "${sid}_${tid}_CorticoCortical_lesion_${idx}.trk"
-    file "${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.trk"
+    file "${sid}_${tid}_CorticoCortical_lesion_${idx}.trk" optional true
+    file "${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.trk" optional true
     file "${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt"
 
   script:
@@ -255,11 +258,14 @@ process filterLesionCorticoCorticalCommissural{
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoCortical_lesion_${idx}.trk \
                 --filtering_list ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt \
-                -f --display_counts > ${sid}_${tid}_CorticoCortical_lesion_${idx}.txt
+                -f --no_empty --display_counts > ${sid}_${tid}_CorticoCortical_lesion_${idx}.txt
 
+  if ${params.filterLength} && [ -f "${sid}_${tid}_CorticoCortical_lesion_${idx}.trk" ]
+  then
   scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoCortical_lesion_${idx}.trk \
-              ${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.trk \
-              --minL ${params.minL} -f --display_counts > ${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.txt
+             ${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.trk \
+             --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.txt
+  fi
   """
 }
 
@@ -269,9 +275,9 @@ process filterLesionCorticoStriatal{
     each side from sides
 
   output:
-    set sid, tid, idx, side, "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_${params.minL}.txt" into corticostriatalLesion
-    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.trk"
-    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_${params.minL}.trk"
+    set sid, tid, idx, side, "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_${params.minL}.txt" into corticostriatalLesion optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.trk" optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_${params.minL}.trk" optional true
     file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_filter.txt"
 
   script:
@@ -281,11 +287,14 @@ process filterLesionCorticoStriatal{
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.trk \
                 --filtering_list ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_filter.txt \
-                -f --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.txt
+                -f --no_empty --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.txt
 
-  scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.trk \
+  if ${params.filterLength} && [ -f "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.trk" ]
+  then
+    scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.trk \
               ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_${params.minL}.trk \
-              --minL ${params.minL} -f --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_${params.minL}.txt
+              --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_${params.minL}.txt
+  fi
   """
 }
 
@@ -294,9 +303,9 @@ process filterLesionCorticoStriatalCommisural{
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticostriatalcommisural
 
   output:
-    set sid, tid, idx, "${sid}_${tid}_CorticoStriatal_lesion_${idx}.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.txt" into corticostriatalcommisuralLesion
-    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}.trk"
-    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.trk"
+    set sid, tid, idx, "${sid}_${tid}_CorticoStriatal_lesion_${idx}.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.txt" into corticostriatalcommisuralLesion optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}.trk" optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.trk" optional true
     file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_filter.txt"
 
   script:
@@ -307,11 +316,14 @@ process filterLesionCorticoStriatalCommisural{
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoStriatal_lesion_${idx}.trk \
                 --filtering_list ${sid}_${tid}_CorticoStriatal_lesion_${idx}_filter.txt \
-                -f --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}.txt
+                -f --no_empty --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}.txt
 
+  if ${params.filterLength} && [ -f "${sid}_${tid}_CorticoStriatal_lesion_${idx}.trk" ]
+  then
   scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoStriatal_lesion_${idx}.trk \
-              ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.trk \
-              --minL ${params.minL} -f --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.txt
+             ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.trk \
+             --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.txt
+  fi
   """
 }
 
@@ -321,9 +333,9 @@ process filterLesionCorticoThalamic{
     each side from sides
 
   output:
-    set sid, tid, idx, side, "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.txt" into corticothalamicLesion
-    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.trk"
-    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.trk"
+    set sid, tid, idx, side, "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.txt" into corticothalamicLesion optional true
+    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.trk" optional true
+    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.trk" optional true
     file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_filter.txt"
 
   script:
@@ -333,11 +345,14 @@ process filterLesionCorticoThalamic{
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.trk \
                 --filtering_list ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_filter.txt \
-                -f --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.txt
+                -f --no_empty --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.txt
 
+  if ${params.filterLength} && [ -f "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.trk" ]
+  then
   scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.trk \
-              ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.trk \
-              --minL ${params.minL} -f --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.txt
+             ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.trk \
+             --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.txt
+  fi
   """
 }
 
@@ -346,9 +361,9 @@ process filterLesionCorticoThalamicCommisural{
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticothalamiccommisural
 
   output:
-    set sid, tid, idx, "${sid}_${tid}_CorticoThalamic_lesion_${idx}.txt", "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.txt" into corticothalamiccommisuralLesion
-    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}.trk"
-    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.trk"
+    set sid, tid, idx, "${sid}_${tid}_CorticoThalamic_lesion_${idx}.txt", "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.txt" into corticothalamiccommisuralLesion optional true
+    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}.trk" optional true
+    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.trk" optional true
     file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_filter.txt"
 
   script:
@@ -359,10 +374,13 @@ process filterLesionCorticoThalamicCommisural{
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoThalamic_lesion_${idx}.trk \
                 --filtering_list ${sid}_${tid}_CorticoThalamic_lesion_${idx}_filter.txt \
-                -f --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}.txt
+                -f --no_empty --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}.txt
 
+  if ${params.filterLength} && [ -f "${sid}_${tid}_CorticoThalamic_lesion_${idx}.trk" ]
+  then
   scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoThalamic_lesion_${idx}.trk \
-              ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.trk \
-              --minL ${params.minL} -f --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.txt
+             ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.trk \
+             --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.txt
+  fi
   """
 }
