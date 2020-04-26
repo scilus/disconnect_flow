@@ -128,9 +128,6 @@ if (params.in_tractograms_cc){
       output:
         set tid, idx, "${tid}_CorticoCortical_${idx}.trk" into corticocortical, corticocorticalcommisural
 
-      when:
-        params.tractogramAtlas==false
-
       script:
         """
             scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
@@ -153,9 +150,6 @@ if (params.in_tractograms_cs){
 
         output:
           set tid, idx, "${tid}_CorticoStriatal_${idx}.trk" into corticostriatal, corticostriatalcommisural
-
-        when:
-          params.tractogramAtlas==false
 
         script:
           """
@@ -181,9 +175,6 @@ if (params.in_tractograms_ct){
 
       output:
         set tid, idx, "${tid}_CorticoThalamic_${idx}.trk" into corticothalamic, corticothalamiccommisural
-
-      when:
-        params.tractogramAtlas==false
 
       script:
         """

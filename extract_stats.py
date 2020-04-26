@@ -30,52 +30,74 @@ def main():
     in_folder = args.in_folder
     print('Input folder : %s' % in_folder)
 
-    atlases = ['CorticoCortical'] #, 'CorticoStriatal', 'CorticoThalamic']
+    atlases = ['CorticoCortical', 'CorticoStriatal', 'CorticoThalamic']
     indices = [[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17],
                [1,2,3,4,5,6,7,8,9,10,12,13,14,16,17],
                [1,2,3,4,5,6,7,8,9,10,11,13,15,16]]
-    sides = ['L', 'R']
+    sides = ['L', 'R', '']
 
-    subjects = next(os.walk(in_folder))[1].remove('[:]')
+    subjects = next(os.walk(in_folder))[1]
 
-    stats = pd.DataFrame(columns=['subjectID', 'trk'])
+    stats = pd.DataFrame(columns=['subjectID', 'trkID'])
+
 
     expression = '(.*)_([0-9]{6}).*'
     check_expression = re.compile(expression)
 
     for idx, curr_atlas in enumerate(atlases):
-        for indices in indices[idx]:
+        curr_stats = pd.DataFrame(columns=['subjectID', 'trkID'])
+        for indice in indices[idx]:
             for side in sides:
-                currColumn = ('_').join([curr_atlas, str(indices), side])
+                if side:
+                    currColumn = ('_').join([curr_atlas, str(indice), side])
+                else:
+                    currColumn = ('_').join([curr_atlas, str(indice)])
+
                 if not currColumn in stats.columns:
                     stats[currColumn] = ""
-                curr_search = os.path.join(in_folder,
-                                           '*', # Subject Folder
-                                           '*' + atlases[0] + '*', # Atlas Folder
-                                           '*' + atlases[0] + '*_'+ str(indices) + '_' + side + '.txt')
+                if not currColumn in curr_stats.columns:
+                    curr_stats[currColumn] = ""
+
+                if side:
+                    curr_search = os.path.join(in_folder,
+                                               '*', # Subject Folder
+                                           '*' + curr_atlas + '*', # Atlas Folder
+                                           '*' + curr_atlas + '*_'+ str(indice) + '_' + side + '.txt')
+                else:
+                    curr_search = os.path.join(in_folder,
+                                               '*', # Subject Folder
+                                           '*' + curr_atlas + '*', # Atlas Folder
+                                           '*' + curr_atlas + '*_'+ str(indice) + '.txt')
+
                 curr_data = glob.glob(curr_search)
+                curr_data.sort()
                 for curr_json in curr_data:
+
                     check_re = check_expression.match(curr_json)
                     id = os.path.basename(check_re.groups()[0])
                     trk = check_re.groups()[1]
                     with open(curr_json) as f:
                         d = json.load(f)
-                        sc_af_bdo = d['Filter_0']['tract_count_after_filtering']
+                        if side:
+                            sc_af_bdo = d['Filter_0']['streamline_count_after_filtering']
+                        else:
+                            sc_af_bdo = d['Filter_1']['streamline_count_after_filtering']
                         sc_af = d['streamline_count_final_filtering']
 
 
                     stats = add_stats(stats, id, trk, sc_af_bdo, sc_af, currColumn)
+                    curr_stats = add_stats(curr_stats, id, trk, sc_af_bdo, sc_af, currColumn)
 
+        curr_stats.to_csv(curr_atlas+'.csv')
 
     stats.to_csv(args.out_file)
 
 def add_stats(stats, id, trk, sc_af_bdo, sc_af, currColumn):
 
-    index = stats[(stats['subjectID']==id) & (stats['trk']==trk)].index
+    index = stats[(stats['subjectID']==id) & (stats['trkID']==trk)].index
     val = ('/').join([str(sc_af), str(sc_af_bdo)])
-
     if index.empty:
-        newEntry = pd.DataFrame([[id, trk, val]], columns=['subjectID', 'trk', currColumn])
+        newEntry = pd.DataFrame([[id, trk, val]], columns=['subjectID', 'trkID', currColumn])
         stats = stats.append(newEntry, ignore_index=True)
     else:
         index = index[0]
