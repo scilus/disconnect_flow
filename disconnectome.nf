@@ -292,28 +292,43 @@ process filterLesionCorticoStriatal{
 process filterLesionCorticoStriatalCommisural{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticostriatalcommisural
+    each side from sides
 
   output:
-    set sid, tid, idx, "${sid}_${tid}_CorticoStriatal_lesion_${idx}.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.txt" into corticostriatalcommisuralLesion optional true
-    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}.trk" optional true
-    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.trk" optional true
-    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_filter.txt"
+    set sid, tid, idx, "${sid}_${tid}_CorticoStriatal_lesion_${idx}_LR.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_LR_${params.minL}.txt" into corticostriatalLRcommisuralLesion optional true
+    set sid, tid, idx, "${sid}_${tid}_CorticoStriatal_lesion_${idx}_RL.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_RL_${params.minL}.txt" into corticostriatalRLcommisuralLesion optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_LR.trk" optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_RL.trk" optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_LR_${params.minL}.trk" optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_RL_${params.minL}.trk" optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_LR_filter.txt" optional true
+    file "${sid}_${tid}_CorticoStriatal_lesion_${idx}_RL_filter.txt" optional true
 
   script:
   """
-  echo "bdo ${params.atlasFolder}LHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_filter.txt
-  echo "bdo ${params.atlasFolder}RHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_filter.txt
-  echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_filter.txt
-
-  scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoStriatal_lesion_${idx}.trk \
-                --filtering_list ${sid}_${tid}_CorticoStriatal_lesion_${idx}_filter.txt \
-                -f --no_empty --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}.txt
-
-  if ${params.filterLength} && [ -f "${sid}_${tid}_CorticoStriatal_lesion_${idx}.trk" ]
+  if [ "${side}" == "L" ]
   then
-  scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoStriatal_lesion_${idx}.trk \
-             ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.trk \
-             --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${params.minL}.txt
+    opside="R"
+  else
+    opside="L"
+  fi
+
+  echo "drawn_roi ${params.atlasFolder}/cortical17/${idx}_${side}.nii.gz either_end include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt
+  echo "drawn_roi ${params.atlasFolder}/striatal17/${idx}_\${opside}.nii.gz either_end include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt
+  echo "drawn_roi ${lesion} any include" >>  ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt
+
+  if [ -f "${params.atlasFolder}/striatal17/${idx}_\${opside}.nii.gz" ]
+  then
+  scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}.trk \
+              --filtering_list ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt \
+              -f --no_empty --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}.txt
+  fi
+
+  if ${params.filterLength} && [ -f "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}.trk" ]
+  then
+  scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}.trk \
+            ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_${params.minL}.trk \
+           --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_${params.minL}.txt
   fi
   """
 }
@@ -343,35 +358,6 @@ process filterLesionCorticoThalamic{
   scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.trk \
              ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.trk \
              --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.txt
-  fi
-  """
-}
-
-process filterLesionCorticoThalamicCommisural{
-  input:
-    set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticothalamiccommisural
-
-  output:
-    set sid, tid, idx, "${sid}_${tid}_CorticoThalamic_lesion_${idx}.txt", "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.txt" into corticothalamiccommisuralLesion optional true
-    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}.trk" optional true
-    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.trk" optional true
-    file "${sid}_${tid}_CorticoThalamic_lesion_${idx}_filter.txt"
-
-  script:
-  """
-  echo "bdo ${params.atlasFolder}LHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoThalamic_lesion_${idx}_filter.txt
-  echo "bdo ${params.atlasFolder}RHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoThalamic_lesion_${idx}_filter.txt
-  echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoThalamic_lesion_${idx}_filter.txt
-
-  scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoThalamic_lesion_${idx}.trk \
-                --filtering_list ${sid}_${tid}_CorticoThalamic_lesion_${idx}_filter.txt \
-                -f --no_empty --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}.txt
-
-  if ${params.filterLength} && [ -f "${sid}_${tid}_CorticoThalamic_lesion_${idx}.trk" ]
-  then
-  scil_filter_streamlines_by_length.py ${sid}_${tid}_CorticoThalamic_lesion_${idx}.trk \
-             ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.trk \
-             --minL ${params.minL} -f --no_empty --display_counts > ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${params.minL}.txt
   fi
   """
 }

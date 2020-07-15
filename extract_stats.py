@@ -34,7 +34,7 @@ def main():
     indices = [[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17],
                [1,2,3,4,5,6,7,8,9,10,12,13,14,16,17],
                [1,2,3,4,5,6,7,8,9,10,11,13,15,16]]
-    sides = ['L', 'R', '']
+    sides = ['L', 'R', 'LR', 'RL','']
 
     subjects = next(os.walk(in_folder))[1]
 
@@ -53,14 +53,9 @@ def main():
                 else:
                     currColumn = ('_').join([curr_atlas, str(indice)])
 
-                if not currColumn in stats.columns:
-                    stats[currColumn] = ""
-                if not currColumn in curr_stats.columns:
-                    curr_stats[currColumn] = ""
-
                 if side:
                     curr_search = os.path.join(in_folder,
-                                               '*', # Subject Folder
+                                           '*', # Subject Folder
                                            '*' + curr_atlas + '*', # Atlas Folder
                                            '*' + curr_atlas + '*_'+ str(indice) + '_' + side + '.txt')
                 else:
@@ -68,6 +63,8 @@ def main():
                                                '*', # Subject Folder
                                            '*' + curr_atlas + '*', # Atlas Folder
                                            '*' + curr_atlas + '*_'+ str(indice) + '.txt')
+
+
 
                 curr_data = glob.glob(curr_search)
                 curr_data.sort()
@@ -88,20 +85,35 @@ def main():
                     stats = add_stats(stats, id, trk, sc_af_bdo, sc_af, currColumn)
                     curr_stats = add_stats(curr_stats, id, trk, sc_af_bdo, sc_af, currColumn)
 
+        print(curr_atlas)
         curr_stats.to_csv(curr_atlas+'.csv')
 
     stats.to_csv(args.out_file)
 
 def add_stats(stats, id, trk, sc_af_bdo, sc_af, currColumn):
 
+    for nColumn in [currColumn, currColumn + '_total']:
+        if not nColumn in stats.columns:
+            stats[nColumn] = ""
+
     index = stats[(stats['subjectID']==id) & (stats['trkID']==trk)].index
     val = ('/').join([str(sc_af), str(sc_af_bdo)])
+    val = str(sc_af)
+    val_total = str(sc_af_bdo)
     if index.empty:
         newEntry = pd.DataFrame([[id, trk, val]], columns=['subjectID', 'trkID', currColumn])
         stats = stats.append(newEntry, ignore_index=True)
+
+        index = stats[(stats['subjectID']==id) & (stats['trkID']==trk)].index
+        index = index[0]
+        stats.loc[index][currColumn+'_total'] = val_total
+
     else:
         index = index[0]
         stats.loc[index][currColumn] = val
+        stats.loc[index][currColumn+'_total'] = val_total
+
+
 
     return stats
 
