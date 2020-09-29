@@ -10,8 +10,8 @@ nextflow run disconnectome.nf [OPTIONAL_ARGUMENTS] (--root)
   You can use atlasFolder and tractograms (to rebuild database of filtered tractograms) or filteredTractograms only
 
 nextflow run disconnectome.nf \
-    --root disconects_dataset/ \
-    --filteredTractograms [FullPathTo]/Filters/ \
+    --root dataset/ \
+    --filteredTractograms [FullPathTo]/filtered_tractograms/ \
     --output_dir [FullPathTo]/output/ \
     --resume
 

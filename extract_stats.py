@@ -113,8 +113,6 @@ def add_stats(stats, id, trk, sc_af_bdo, sc_af, currColumn):
         stats.loc[index][currColumn] = val
         stats.loc[index][currColumn+'_total'] = val_total
 
-
-
     return stats
 
 

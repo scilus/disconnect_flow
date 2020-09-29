@@ -1,21 +1,24 @@
-DisconetsFlow:
+Disconnectoflow:
 
 Example command line (Build filtered tractograms really long):
 ```
 nextflow run disconnectome.nf \
-        --root disconects_dataset/ \
-        --atlasFolder [FullPathTo]/disconect_atlas/ \
-        --tractograms [FullPathTo]/disconect_tractograms/ -resume
+        --root dataset/ \
+        --atlasFolder [FullPathTo]/atlas/ \
+        --tractograms [FullPathTo]/tractograms/ \
+        -with-singularity scilpy-1.0.0-rc1.sif \
+        resume
 ```
 
 or
 
 ```
 nextflow run disconnectome.nf \
-        --root disconects_dataset/ \
-        --filteredTractograms [FullPathTo]/disconets_filtered_tractograms/ \
-        --atlasFolder [FullPathTo]/disconect_atlas_short_version/ \
+        --root dataset/ \
+        --filteredTractograms [FullPathTo]/filtered_tractograms/ \
+        --atlasFolder [FullPathTo]/atlas/ \
         --output_dir [FullPathTo]/output/ \
+        -with-singularity scilpy-1.0.0-rc1.sif \
         --resume
 ```
 
