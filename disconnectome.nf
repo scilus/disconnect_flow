@@ -35,6 +35,14 @@ workflow.onComplete {
 
 
 atlas = Channel.from(file(params.atlasFolder))
+atlas.into{in_atlas_1;
+           in_atlas_2;
+           in_atlas_3;
+           in_atlas_4;
+           in_atlas_5;
+           in_atlas_6;
+           in_atlas_7;
+           in_atlas_8}
 
 if (params.root){
     log.info "Input: $params.root"
@@ -127,7 +135,7 @@ if (params.in_tractograms_cc){
       input:
         set tid, file(tractogram) from in_tractograms_cc
         each idx from indices_cc
-        file(atlas_f) from atlas.first()
+        file(atlas_f) from in_atlas_1.first()
 
       output:
         set tid, idx, "${tid}_CorticoCortical_${idx}.trk" into corticocortical, corticocorticalcommisural
@@ -151,7 +159,7 @@ if (params.in_tractograms_cs){
         input:
           set tid, file(tractogram) from in_tractograms_cs
           each idx from indices_cs
-          file(atlas_f) from atlas.first()
+          file(atlas_f) from in_atlas_2.first()
 
         output:
           set tid, idx, "${tid}_CorticoStriatal_${idx}.trk" into corticostriatal, corticostriatalcommisural
@@ -177,7 +185,7 @@ if (params.in_tractograms_ct){
       input:
         set tid, file(tractogram) from in_tractograms_ct
         each idx from indices_ct
-        file(atlas_f) from atlas.first()
+        file(atlas_f) from in_atlas_3.first()
 
       output:
         set tid, idx, "${tid}_CorticoThalamic_${idx}.trk" into corticothalamic, corticothalamiccommisural
@@ -210,7 +218,7 @@ process filterLesionCorticoCortical{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticocortical
     each side from sides
-    file(atlas_f) from atlas.first()
+    file(atlas_f) from in_atlas_4.first()
 
   output:
     set sid, tid, idx, side, "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_${params.minL}.txt" into corticocorticalLesion optional true
@@ -240,7 +248,7 @@ process filterLesionCorticoCortical{
 process filterLesionCorticoCorticalCommissural{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticocorticalcommisural
-    file(atlas_f) from atlas.first()
+    file(atlas_f) from in_atlas_5.first()
 
   output:
     set sid, tid, idx, "${sid}_${tid}_CorticoCortical_lesion_${idx}.txt", "${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.txt" into corticocorticalcommisuralLesion optional true
@@ -272,7 +280,7 @@ process filterLesionCorticoStriatal{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticostriatal
     each side from sides
-    file(atlas_f) from atlas.first()
+    file(atlas_f) from in_atlas_6.first()
 
   output:
     set sid, tid, idx, side, "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_${params.minL}.txt" into corticostriatalLesion optional true
@@ -302,7 +310,7 @@ process filterLesionCorticoStriatalCommisural{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticostriatalcommisural
     each side from sides
-    file(atlas_f) from atlas.first()
+    file(atlas_f) from in_atlas_7.first()
 
   output:
     set sid, tid, idx, "${sid}_${tid}_CorticoStriatal_lesion_${idx}_LR.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_LR_${params.minL}.txt" into corticostriatalLRcommisuralLesion optional true
@@ -347,7 +355,7 @@ process filterLesionCorticoThalamic{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticothalamic
     each side from sides
-    file(atlas_f) from atlas.first()
+    file(atlas_f) from in_atlas_8.first()
 
   output:
     set sid, tid, idx, side, "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.txt" into corticothalamicLesion optional true
