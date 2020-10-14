@@ -34,16 +34,6 @@ workflow.onComplete {
 }
 
 
-atlas = Channel.from(file(params.atlasFolder))
-atlas.into{in_atlas_1;
-           in_atlas_2;
-           in_atlas_3;
-           in_atlas_4;
-           in_atlas_5;
-           in_atlas_6;
-           in_atlas_7;
-           in_atlas_8}
-
 if (params.root){
     log.info "Input: $params.root"
     root = file(params.root)
@@ -100,6 +90,16 @@ indices_cc = params.indices_cc?.tokenize(',')
 indices_cs = params.indices_cs?.tokenize(',')
 indices_ct = params.indices_ct?.tokenize(',')
 sides = params.sides?.tokenize(',')
+
+atlas = Channel.from(file(params.atlasFolder))
+atlas.into{in_atlas_1;
+           in_atlas_2;
+           in_atlas_3;
+           in_atlas_4;
+           in_atlas_5;
+           in_atlas_6;
+           in_atlas_7;
+           in_atlas_8}
 
 process README {
     cpus 1
