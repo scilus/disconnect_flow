@@ -33,6 +33,9 @@ workflow.onComplete {
     log.info "Execution duration: $workflow.duration"
 }
 
+
+atlas = Channel.from(file(params.atlasFolder))
+
 if (params.root){
     log.info "Input: $params.root"
     root = file(params.root)
@@ -124,6 +127,7 @@ if (params.in_tractograms_cc){
       input:
         set tid, file(tractogram) from in_tractograms_cc
         each idx from indices_cc
+        file(atlas_f) from atlas.first()
 
       output:
         set tid, idx, "${tid}_CorticoCortical_${idx}.trk" into corticocortical, corticocorticalcommisural
@@ -133,7 +137,7 @@ if (params.in_tractograms_cc){
             scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
             scil_filter_tractogram.py valid_${tid}_${idx}.trk \
               ${tid}_CorticoCortical_${idx}.trk \
-              --drawn_roi ${params.atlasFolder}cortical17/${idx}.nii.gz both_ends include --no_empty
+              --drawn_roi ${atlas_f}cortical17/${idx}.nii.gz both_ends include --no_empty
         """
     }
 }
@@ -147,6 +151,7 @@ if (params.in_tractograms_cs){
         input:
           set tid, file(tractogram) from in_tractograms_cs
           each idx from indices_cs
+          file(atlas_f) from atlas.first()
 
         output:
           set tid, idx, "${tid}_CorticoStriatal_${idx}.trk" into corticostriatal, corticostriatalcommisural
@@ -156,8 +161,8 @@ if (params.in_tractograms_cs){
               scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
               scil_filter_tractogram.py valid_${tid}_${idx}.trk \
                 ${tid}_CorticoStriatal_${idx}.trk \
-                --drawn_roi ${params.atlasFolder}cortical17/${idx}.nii.gz either_end include \
-                --drawn_roi ${params.atlasFolder}striatal17/${idx}.nii.gz either_end include --no_empty
+                --drawn_roi ${atlas_f}cortical17/${idx}.nii.gz either_end include \
+                --drawn_roi ${atlas_f}striatal17/${idx}.nii.gz either_end include --no_empty
           """
       }
 }
@@ -172,6 +177,7 @@ if (params.in_tractograms_ct){
       input:
         set tid, file(tractogram) from in_tractograms_ct
         each idx from indices_ct
+        file(atlas_f) from atlas.first()
 
       output:
         set tid, idx, "${tid}_CorticoThalamic_${idx}.trk" into corticothalamic, corticothalamiccommisural
@@ -181,8 +187,8 @@ if (params.in_tractograms_ct){
             scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
             scil_filter_tractogram.py valid_${tid}_${idx}.trk \
               ${tid}_CorticoThalamic_${idx}.trk \
-              --drawn_roi ${params.atlasFolder}cortical17/${idx}.nii.gz either_end include \
-              --drawn_roi ${params.atlasFolder}thalamic17/${idx}.nii.gz either_end include --no_empty
+              --drawn_roi ${atlas_f}cortical17/${idx}.nii.gz either_end include \
+              --drawn_roi ${atlas_f}thalamic17/${idx}.nii.gz either_end include --no_empty
         """
     }
 }
@@ -204,6 +210,7 @@ process filterLesionCorticoCortical{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticocortical
     each side from sides
+    file(atlas_f) from atlas.first()
 
   output:
     set sid, tid, idx, side, "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_${params.minL}.txt" into corticocorticalLesion optional true
@@ -214,7 +221,7 @@ process filterLesionCorticoCortical{
 
   script:
   """
-  echo "bdo ${params.atlasFolder}${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_filter.txt
+  echo "bdo ${atlas_f}${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_filter.txt
   echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_filter.txt
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.trk \
@@ -233,6 +240,7 @@ process filterLesionCorticoCortical{
 process filterLesionCorticoCorticalCommissural{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticocorticalcommisural
+    file(atlas_f) from atlas.first()
 
   output:
     set sid, tid, idx, "${sid}_${tid}_CorticoCortical_lesion_${idx}.txt", "${sid}_${tid}_CorticoCortical_lesion_${idx}_${params.minL}.txt" into corticocorticalcommisuralLesion optional true
@@ -243,8 +251,8 @@ process filterLesionCorticoCorticalCommissural{
 
   script:
   """
-  echo "bdo ${params.atlasFolder}LHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
-  echo "bdo ${params.atlasFolder}RHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
+  echo "bdo ${atlas_f}LHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
+  echo "bdo ${atlas_f}RHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
   echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoCortical_lesion_${idx}.trk \
@@ -264,6 +272,7 @@ process filterLesionCorticoStriatal{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticostriatal
     each side from sides
+    file(atlas_f) from atlas.first()
 
   output:
     set sid, tid, idx, side, "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_${params.minL}.txt" into corticostriatalLesion optional true
@@ -273,7 +282,7 @@ process filterLesionCorticoStriatal{
 
   script:
   """
-  echo "bdo ${params.atlasFolder}${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_filter.txt
+  echo "bdo ${atlas_f}${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_filter.txt
   echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_filter.txt
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.trk \
@@ -293,6 +302,7 @@ process filterLesionCorticoStriatalCommisural{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticostriatalcommisural
     each side from sides
+    file(atlas_f) from atlas.first()
 
   output:
     set sid, tid, idx, "${sid}_${tid}_CorticoStriatal_lesion_${idx}_LR.txt", "${sid}_${tid}_CorticoStriatal_lesion_${idx}_LR_${params.minL}.txt" into corticostriatalLRcommisuralLesion optional true
@@ -313,11 +323,11 @@ process filterLesionCorticoStriatalCommisural{
     opside="L"
   fi
 
-  echo "drawn_roi ${params.atlasFolder}/cortical17/${idx}_${side}.nii.gz either_end include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt
-  echo "drawn_roi ${params.atlasFolder}/striatal17/${idx}_\${opside}.nii.gz either_end include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt
+  echo "drawn_roi ${atlas_f}/cortical17/${idx}_${side}.nii.gz either_end include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt
+  echo "drawn_roi ${atlas_f}/striatal17/${idx}_\${opside}.nii.gz either_end include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt
   echo "drawn_roi ${lesion} any include" >>  ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt
 
-  if [ -f "${params.atlasFolder}/striatal17/${idx}_\${opside}.nii.gz" ]
+  if [ -f "${atlas_f}/striatal17/${idx}_\${opside}.nii.gz" ]
   then
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}.trk \
               --filtering_list ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}\${opside}_filter.txt \
@@ -337,6 +347,7 @@ process filterLesionCorticoThalamic{
   input:
     set sid, file(lesion), tid, idx, file(tractogram) from in_data_corticothalamic
     each side from sides
+    file(atlas_f) from atlas.first()
 
   output:
     set sid, tid, idx, side, "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.txt", "${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_${params.minL}.txt" into corticothalamicLesion optional true
@@ -346,7 +357,7 @@ process filterLesionCorticoThalamic{
 
   script:
   """
-  echo "bdo ${params.atlasFolder}${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_filter.txt
+  echo "bdo ${atlas_f}${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_filter.txt
   echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_filter.txt
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.trk \
