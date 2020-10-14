@@ -145,7 +145,7 @@ if (params.in_tractograms_cc){
             scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
             scil_filter_tractogram.py valid_${tid}_${idx}.trk \
               ${tid}_CorticoCortical_${idx}.trk \
-              --drawn_roi ${atlas_f}cortical17/${idx}.nii.gz both_ends include --no_empty
+              --drawn_roi ${atlas_f}/cortical17/${idx}.nii.gz both_ends include --no_empty
         """
     }
 }
@@ -169,8 +169,8 @@ if (params.in_tractograms_cs){
               scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
               scil_filter_tractogram.py valid_${tid}_${idx}.trk \
                 ${tid}_CorticoStriatal_${idx}.trk \
-                --drawn_roi ${atlas_f}cortical17/${idx}.nii.gz either_end include \
-                --drawn_roi ${atlas_f}striatal17/${idx}.nii.gz either_end include --no_empty
+                --drawn_roi ${atlas_f}/cortical17/${idx}.nii.gz either_end include \
+                --drawn_roi ${atlas_f}/striatal17/${idx}.nii.gz either_end include --no_empty
           """
       }
 }
@@ -195,8 +195,8 @@ if (params.in_tractograms_ct){
             scil_remove_invalid_streamlines.py ${tractogram} valid_${tid}_${idx}.trk
             scil_filter_tractogram.py valid_${tid}_${idx}.trk \
               ${tid}_CorticoThalamic_${idx}.trk \
-              --drawn_roi ${atlas_f}cortical17/${idx}.nii.gz either_end include \
-              --drawn_roi ${atlas_f}thalamic17/${idx}.nii.gz either_end include --no_empty
+              --drawn_roi ${atlas_f}/cortical17/${idx}.nii.gz either_end include \
+              --drawn_roi ${atlas_f}/thalamic17/${idx}.nii.gz either_end include --no_empty
         """
     }
 }
@@ -229,7 +229,7 @@ process filterLesionCorticoCortical{
 
   script:
   """
-  echo "bdo ${atlas_f}${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_filter.txt
+  echo "bdo ${atlas_f}/${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_filter.txt
   echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}_filter.txt
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoCortical_lesion_${idx}_${side}.trk \
@@ -259,8 +259,8 @@ process filterLesionCorticoCorticalCommissural{
 
   script:
   """
-  echo "bdo ${atlas_f}LHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
-  echo "bdo ${atlas_f}RHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
+  echo "bdo ${atlas_f}/LHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
+  echo "bdo ${atlas_f}/RHemisphereMNI.bdo either_end include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
   echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoCortical_lesion_${idx}_filter.txt
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoCortical_lesion_${idx}.trk \
@@ -290,7 +290,7 @@ process filterLesionCorticoStriatal{
 
   script:
   """
-  echo "bdo ${atlas_f}${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_filter.txt
+  echo "bdo ${atlas_f}/${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_filter.txt
   echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}_filter.txt
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoStriatal_lesion_${idx}_${side}.trk \
@@ -365,7 +365,7 @@ process filterLesionCorticoThalamic{
 
   script:
   """
-  echo "bdo ${atlas_f}${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_filter.txt
+  echo "bdo ${atlas_f}/${side}HemisphereMNI.bdo both_ends include" >> ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_filter.txt
   echo "drawn_roi ${lesion} any include" >> ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}_filter.txt
 
   scil_filter_tractogram.py ${tractogram} ${sid}_${tid}_CorticoThalamic_lesion_${idx}_${side}.trk \
