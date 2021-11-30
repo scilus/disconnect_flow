@@ -139,7 +139,7 @@ if (params.tractograms){
         file(atlas_f) from in_atlas_1.first()
 
       output:
-        set tid, idx, "${tid}_CorticoCortical_${idx}.trk" into corticocortical, corticocorticalcommisural
+        set tid, idx, "${tid}_CorticoCortical_${idx}.trk" into corticocortical, corticocorticalcommisural optional true
 
       script:
         """
@@ -163,7 +163,7 @@ if (params.tractograms){
           file(atlas_f) from in_atlas_2.first()
 
         output:
-          set tid, idx, "${tid}_CorticoStriatal_${idx}.trk" into corticostriatal, corticostriatalcommisural
+          set tid, idx, "${tid}_CorticoStriatal_${idx}.trk" into corticostriatal, corticostriatalcommisural optional true
 
         script:
           """
@@ -189,7 +189,7 @@ if (params.tractograms){
         file(atlas_f) from in_atlas_3.first()
 
       output:
-        set tid, idx, "${tid}_CorticoThalamic_${idx}.trk" into corticothalamic, corticothalamiccommisural
+        set tid, idx, "${tid}_CorticoThalamic_${idx}.trk" into corticothalamic, corticothalamiccommisural optional true
 
       script:
         """
