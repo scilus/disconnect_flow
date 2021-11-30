@@ -80,7 +80,8 @@ in_data.into{in_data_cc;
              in_data_ct;
              in_data_ctc}
 
-if (params.in_tractograms) {
+if (params.tractograms) {
+  log.info "Im HERE"
   in_tractograms.into{in_tractograms_cc;
                       in_tractograms_cs;
                       in_tractograms_ct}
@@ -126,7 +127,7 @@ process README {
     """
 }
 
-if (params.in_tractograms_cc){
+if (params.tractograms){
     process filterCorticoCortical{
       cpus 1
       publishDir = params.FilterCorticoCortical_Publish_Dir
@@ -150,7 +151,7 @@ if (params.in_tractograms_cc){
     }
 }
 
-if (params.in_tractograms_cs){
+if (params.tractograms){
       process filterCorticoStriatal{
         cpus 1
         publishDir = params.FilterCorticoStriatal_Publish_Dir
@@ -175,7 +176,7 @@ if (params.in_tractograms_cs){
       }
 }
 
-if (params.in_tractograms_ct){
+if (params.tractograms){
     process filterCorticoThalamic{
       cpus 1
       publishDir = params.FilterCorticoThalamic_Publish_Dir
