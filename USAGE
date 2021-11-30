@@ -5,11 +5,13 @@ Run Disconnectome pipeline
 
 USAGE
 
-nextflow run disconnectome.nf [OPTIONAL_ARGUMENTS] (--root)
+nextflow run main.nf [OPTIONAL_ARGUMENTS] (--input)
 
-  You can use atlasFolder and tractograms (to rebuild database of filtered tractograms) or filteredTractograms only
+You can use atlasFolder and tractograms (to rebuild database of filtered tractograms) or filteredTractograms only
 
-nextflow run disconnectome.nf \
+If T1s are provided it will registered the lesion into the atlas
+
+nextflow run main.nf \
     --root dataset/ \
     --filteredTractograms [FullPathTo]/filtered_tractograms/ \
     --output_dir [FullPathTo]/output/ \
@@ -18,52 +20,57 @@ nextflow run disconnectome.nf \
 
 DESCRIPTION
 
-    --root=/path/to/[root]              Root folder containing multiple subjects
+    --input=/path/to/[root]            Root folder containing multiple subjects
+                                       [root]
+                                       ├── S1
+                                       │   │── *t1.nii.gz (optional)
+                                       |   │── *lesion_01_mask.nii.gz
+                                       |   └── *lesion_02_mask.nii.gz
+                                       └── S2
+                                           │── *t1.nii.gz (optional)
+                                           │── *lesion_01_mask.nii.gz
+                                           └── *lesion_02_mask.nii.gz
 
-                                        [root]
-                                        ├── S1
-                                        |   └── cavity_1.nii.gz (can have a different name)
-                                        |   └── cavity_2.nii.gz (can have a different name)
-                                        └── S2
-                                            └── cavity_1.nii.gz (can have a different name)
-                                            └── cavity_2.nii.gz (can have a different name)
-
-
-
-    --atlasFolder                       Absolute path to the atlas folder
+    --atlases                          Absolute path to the atlases folder (optional)
                                        [atlasFolder]
-                                       ├── cortical17
-                                       |   └── 1.nii.gz
-                                       |   └── 2.nii.gz
-                                       |   └── *.nii.gz
-                                       ├── striatal17
-                                       |   └── 1.nii.gz
-                                       |   └── 2.nii.gz
-                                       |   └── *.nii.gz
-                                       ├── thalamic17
-                                       |   └── 1.nii.gz
-                                       |   └── 2.nii.gz
-                                       |   └── *.nii.gz
-                                       ├── LHemisphereMNI.bdo
-                                       ├── RHemisphereMNI.bdo
-                                       ├── MNI152_T1_2mm.nii.gz
-                                       └── MNI152_T1_2mm_brain.nii.gz
+                                       ├── atlas01 (can have a different name)
+                                       |   │── atlas_*.nii.gz
+                                       |   │── label_list.txt
+                                       |   └── *t1.nii.gz (optional)
+                                       └── atlas02 (can have a different name)
+                                           │── atlas_*.nii.gz
+                                           │── label_list.txt
+                                           └── *t1.nii.gz (optional)
 
     --tractograms                      Absolute path to the tractograms
                                        [tractograms]
-                                       ├── sub-01
-                                       |   └── *.trk
-                                       └── sub-02
-                                           └── *.trk
+                                       ├── sub-01 (can use a different name)
+                                       |   └── *.trk (can be multiple trk)
+                                       └── sub-02 (can use a different name)
+                                           └── *.trk (can be multiple trk)
 
-    --filteredTractograms               Absolute path to the filtered tractograms
-                                        [filteredTractograms]
-                                        ├── filterCorticoCortical
-                                        |   └── *_CorticoCortical_*.trk
-                                        ├── filterCorticoStriatal
-                                        |   └── *_CorticoStriatal_*.trk
-                                        └── filterCorticoThalamic
-                                            └── *_CorticoThalamic_*.trk
+
+    --tractogramsFiltered              Absolute path to the atlases folder (optional)
+                                       [atlasFolder]
+                                       ├── sub-01 (can have a different name)
+                                       |   └── *.h5
+                                       └── sub-02 (can have a different name)
+                                           └── *.h5
+
+OPTIONAL ARGUMENTS (current value)
 
     --output_dir                        Directory where to write the final results.
-                                        By default, will be in "./results"
+                                        By default, will be in "./results_disconnectflow"
+
+    --no_pruning                        If set, will NOT prune on length ($no_pruning)
+    --no_remove_loops                   If set, will NOT remove streamlines making loops ($no_remove_loops)
+    --no_remove_outliers                If set, will NOT remove outliers using QB ($no_remove_outliers)
+    --min_length                        Pruning minimal segment length ($min_length)
+    --max_length                        Pruning maximal segment length ($max_length)
+    --loop_max_angle                    Maximal winding angle over which a streamline is considered as looping ($loop_max_angle)
+    --outlier_threshold                 Outlier removal threshold when using hierarchical QB ($outlier_threshold)
+
+
+    --processes_connectivity            Number of processes for compute connectivity task ($processes_connectivity)
+    --processes                         The number of parallel processes to launch ($cpu_count).
+                                        Only affects the local scheduler.
