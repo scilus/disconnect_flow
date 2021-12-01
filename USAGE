@@ -1,26 +1,28 @@
-Disconnectome pipeline
+Disconnect pipeline
 ===================
 
-Run Disconnectome pipeline
+Run Disconnect pipeline
 
 USAGE
 
 nextflow run main.nf [OPTIONAL_ARGUMENTS] (--input)
 
-You can use atlasFolder and tractograms (to rebuild database of filtered tractograms) or filteredTractograms only
+You need to provide an atlas as well as tractograms in the same space in order to build your atlas decomposition database.
 
 If T1s are provided it will registered the lesion into the atlas
 
 nextflow run main.nf \
-    --root dataset/ \
-    --filteredTractograms [FullPathTo]/filtered_tractograms/ \
-    --output_dir [FullPathTo]/output/ \
+    --root pathTo/dataset/ \
+    --atlas pathTo/atlas_name/ \
+    --tractograms pathTo/Tractograms
+    --output_dir pathTo/output/ \
     --resume
 
 
 DESCRIPTION
 
     --input=/path/to/[root]            Root folder containing multiple subjects
+                                       If t1 is provided we will register the lesion(s) into atlas.
                                        [root]
                                        ├── S1
                                        │   │── *t1.nii.gz (optional)
@@ -31,16 +33,12 @@ DESCRIPTION
                                            │── *lesion_01_mask.nii.gz
                                            └── *lesion_02_mask.nii.gz
 
-    --atlases                          Absolute path to the atlases folder (optional)
-                                       [atlasFolder]
-                                       ├── atlas01 (can have a different name)
-                                       |   │── atlas_*.nii.gz
-                                       |   │── label_list.txt
-                                       |   └── *t1.nii.gz (optional)
-                                       └── atlas02 (can have a different name)
-                                           │── atlas_*.nii.gz
-                                           │── label_list.txt
-                                           └── *t1.nii.gz (optional)
+    --atlas                            Absolute path to the atlases folder
+                                       [atlasFolder] (Should be the name of the atlas used)
+                                       │── atlas_*.nii.gz
+                                       │── label_list.txt
+                                       └── *t1.nii.gz (optional, only needed if we need to register lesion into atlas space)
+
 
     --tractograms                      Absolute path to the tractograms
                                        [tractograms]
@@ -49,18 +47,15 @@ DESCRIPTION
                                        └── sub-02 (can use a different name)
                                            └── *.trk (can be multiple trk)
 
-
-    --tractogramsFiltered              Absolute path to the atlases folder (optional)
-                                       [atlasFolder]
-                                       ├── sub-01 (can have a different name)
-                                       |   └── *.h5
-                                       └── sub-02 (can have a different name)
-                                           └── *.h5
-
 OPTIONAL ARGUMENTS (current value)
 
     --output_dir                        Directory where to write the final results.
                                         By default, will be in "./results_disconnectflow"
+
+    --run_bet                           Run bet if your t1s are not brain extracted ($run_bet).
+    --linear_registration               If set, will choose linear registration of the lesion into the atlas space.
+    --nonlinear_registration            If set, will choose non-linear registration of the lesion into the atlas space.
+
 
     --no_pruning                        If set, will NOT prune on length ($no_pruning)
     --no_remove_loops                   If set, will NOT remove streamlines making loops ($no_remove_loops)
