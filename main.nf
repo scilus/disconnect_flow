@@ -263,8 +263,8 @@ process Compute_Connectivity_without_similiarity {
     set sid, atlas_name, file(atlas),  file(atlas_label), file(h5), lesion_id, file(lesion) from h5_labels_lesion_for_compute_connectivity
 
     output:
-    set sid, "$atlas_name/*.npy" into matrices_for_visualize
-    set sid, "*.npy"
+    set sid, "$atlas_name/*.npy"
+    set sid, lesion_id, "*.npy" into matrices_for_connectivity_in_csv
 
     script:
     """
@@ -281,5 +281,33 @@ process Compute_Connectivity_without_similiarity {
         --parcel_volume $atlas $atlas_label
     scil_normalize_connectivity.py vol.npy sc_vol_normalized.npy \
         --parcel_volume $atlas $atlas_label
+    """
+}
+
+
+process Connectivity_in_csv {
+    cpus 1
+    publishDir = {"${params.output_dir}/$lesion_id/$sid/Compute_Connectivity"}
+
+    input:
+    set sid, lesion_id, file(matrices) from matrices_for_connectivity_in_csv
+
+    output:
+    file "*csv"
+
+    script:
+    String matrices_list = matrices.join("\",\"")
+    """
+    #!/usr/bin/env python3
+    import numpy as np
+    import os, sys
+
+    for data in ["$matrices_list"]:
+      fmt='%1.8f'
+      if 'sc' in data:
+        fmt='%i'
+
+      curr_data = np.load(data)
+      np.savetxt(data.replace(".npy", ".csv"), curr_data, delimiter=",", fmt=fmt)
     """
 }
