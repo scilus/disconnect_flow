@@ -201,12 +201,12 @@ process Transform_Lesions {
 
     output:
     set sid, "${sid}__${params.lesion_name}_${atlas_name}_space_int16.nii.gz" into transformed_lesions
-    file("${params.lesion_name}_${atlas_name}_space.nii.gz")
+    file "${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz"
 
     script:
     """
-    antsApplyTransforms -d 3 -i $lesion -r $t1_ref -o ${params.lesion_name}_${atlas_name}_space.nii.gz -t $t1_ref $mat -n NearestNeighbor
-    scil_image_math.py convert ${params.lesion_name}_${atlas_name}_space.nii.gz "${sid}__${params.lesion_name}_${atlas_name}_space_int16.nii.gz" --data_type int16
+    antsApplyTransforms -d 3 -i $lesion -r $t1_ref -o ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz -t $mat -n NearestNeighbor
+    scil_image_math.py convert ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz "${sid}__${params.lesion_name}_${atlas_name}_space_int16.nii.gz" --data_type int16
     """
 }
 
@@ -255,7 +255,7 @@ process Decompose_Connectivity {
 h5_for_combine_with_lesion.combine(transformed_lesions)
   .set{h5_labels_lesion_for_compute_connectivity}
 
-process Compute_Connectivity_without_similiarity {
+process Compute_Connectivity_Lesion_without_similiarity {
     cpus params.processes_connectivity
     publishDir = {"${params.output_dir}/$lesion_id/$sid/Compute_Connectivity"}
 
@@ -263,23 +263,22 @@ process Compute_Connectivity_without_similiarity {
     set sid, atlas_name, file(atlas),  file(atlas_label), file(h5), lesion_id, file(lesion) from h5_labels_lesion_for_compute_connectivity
 
     output:
-    set sid, "$atlas_name/*.npy"
-    set sid, lesion_id, "*.npy" into matrices_for_connectivity_in_csv
+    set sid, lesion_id, "*.npy", "connectivity_w_lesion/*.npy" into matrices_for_connectivity_in_csv
 
     script:
     """
-    mkdir $atlas_name
+    mkdir connectivity_w_lesion
 
     scil_compute_connectivity.py $h5 $atlas --force_labels_list $atlas_label \
-        --volume vol.npy --streamline_count sc.npy \
-        --length len.npy --density_weighting \
-        --no_self_connection --include_dps ./ --lesion_load $lesion $atlas_name/ \
+        --volume atlas_vol.npy --streamline_count atlas_sc.npy \
+        --length atlas_len.npy \
+        --include_dps ./ --lesion_load $lesion connectivity_w_lesion/ \
         --processes $params.processes_connectivity
 
     rm rd_fixel.npy -f
-    scil_normalize_connectivity.py sc.npy sc_edge_normalized.npy \
+    scil_normalize_connectivity.py atlas_sc.npy atlas_sc_edge_normalized.npy \
         --parcel_volume $atlas $atlas_label
-    scil_normalize_connectivity.py vol.npy sc_vol_normalized.npy \
+    scil_normalize_connectivity.py atlas_vol.npy atlas_sc_vol_normalized.npy \
         --parcel_volume $atlas $atlas_label
     """
 }
@@ -290,24 +289,30 @@ process Connectivity_in_csv {
     publishDir = {"${params.output_dir}/$lesion_id/$sid/Compute_Connectivity"}
 
     input:
-    set sid, lesion_id, file(matrices) from matrices_for_connectivity_in_csv
+    set sid, lesion_id, file(atlas_matrices), file(matrices_w_lesion) from matrices_for_connectivity_in_csv
 
     output:
-    file "*csv"
+    set sid, "*csv", "connectivity_w_lesion/*.csv"
 
     script:
-    String matrices_list = matrices.join("\",\"")
+    String matrices_list = atlas_matrices.join("\",\"")
+    String matrices_w_lesion = matrices_w_lesion.join("\",\"")
     """
     #!/usr/bin/env python3
     import numpy as np
     import os, sys
 
-    for data in ["$matrices_list"]:
+    os.mkdir("connectivity_w_lesion")
+
+    for data in ["$matrices_list","$matrices_w_lesion"]:
       fmt='%1.8f'
       if 'sc' in data:
         fmt='%i'
 
       curr_data = np.load(data)
-      np.savetxt(data.replace(".npy", ".csv"), curr_data, delimiter=",", fmt=fmt)
+      if "lesion" in data:
+        np.savetxt(os.path.join("connectivity_w_lesion/", data.replace(".npy", ".csv")), curr_data, delimiter=",", fmt=fmt)
+      else:
+        np.savetxt(data.replace(".npy", ".csv"), curr_data, delimiter=",", fmt=fmt)
     """
 }
