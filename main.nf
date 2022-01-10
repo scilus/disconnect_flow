@@ -71,8 +71,8 @@ if (params.atlas){
     log.info "Input atlas: $params.atlas"
     atlas = file(params.atlas)
     in_atlas = Channel
-      .fromFilePairs("$atlas/{atlas_labels.nii.gz,atlas_t1.nii.gz,atlas_list.txt}",
-                     size: 3,
+      .fromFilePairs("$atlas/{atlas_labels.nii.gz,atlas_labels.txt,atlas_t1.nii.gz,atlas_list.txt}",
+                     size: 4,
                      maxDepth: 0,
                      flat: true) {it.parent.name}
 }
@@ -151,7 +151,7 @@ process Register_T1 {
 
     input:
     set sid, file(t1) from t1s_for_register
-    set atlas_name, file(atlas_labels), file(atlas_txt), file(atlas_t1) from atlas_for_registration
+    set atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from atlas_for_registration
 
     output:
     set sid, atlas_name, "${sid}__output0GenericAffine.mat", "${sid}__t1_${atlas_name}_space.nii.gz" into transformation_for_registration_lesions
@@ -216,10 +216,10 @@ process Decompose_Connectivity {
     memory { 6 * trackings.size() }
 
     input:
-    set sid, file(trackings), atlas_name, file(atlas), file(atlas_label), file(atlas_t1) from trk_atlases_for_decompose_connectivity
+    set sid, file(trackings), atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from trk_atlases_for_decompose_connectivity
 
     output:
-    set sid, atlas_name, file(atlas), file(atlas_label), "${sid}_${atlas_name}__decompose.h5" into h5_for_combine_with_lesion
+    set sid, atlas_name, file(atlas), file(atlas_labels), file(atlas_list), "${sid}_${atlas_name}__decompose.h5" into h5_for_combine_with_lesion
 
     script:
     no_pruning_arg = ""
@@ -260,26 +260,27 @@ process Compute_Connectivity_Lesion_without_similiarity {
     publishDir = {"${params.output_dir}/$lesion_id/$sid/Compute_Connectivity"}
 
     input:
-    set sid, atlas_name, file(atlas),  file(atlas_label), file(h5), lesion_id, file(lesion) from h5_labels_lesion_for_compute_connectivity
+    set sid, atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(h5), lesion_id, file(lesion) from h5_labels_lesion_for_compute_connectivity
 
     output:
-    set sid, lesion_id, "*.npy", "connectivity_w_lesion/*.npy" into matrices_for_connectivity_in_csv
+    set sid, lesion_id, "*.npy", "Connectivity_w_lesion/*.npy" into matrices_for_connectivity_in_csv
+    set sid, lesion_id, "$atlas_labels", "$atlas_list", "Connectivity_w_lesion/lesion_sc.npy" into lesion_sc_for_visualisation
 
     script:
     """
-    mkdir connectivity_w_lesion
+    mkdir Connectivity_w_lesion
 
-    scil_compute_connectivity.py $h5 $atlas --force_labels_list $atlas_label \
+    scil_compute_connectivity.py $h5 $atlas --force_labels_list $atlas_list \
         --volume atlas_vol.npy --streamline_count atlas_sc.npy \
         --length atlas_len.npy \
-        --include_dps ./ --lesion_load $lesion connectivity_w_lesion/ \
+        --include_dps ./ --lesion_load $lesion Connectivity_w_lesion/ \
         --processes $params.processes_connectivity
 
     rm rd_fixel.npy -f
     scil_normalize_connectivity.py atlas_sc.npy atlas_sc_edge_normalized.npy \
-        --parcel_volume $atlas $atlas_label
+        --parcel_volume $atlas $atlas_list
     scil_normalize_connectivity.py atlas_vol.npy atlas_sc_vol_normalized.npy \
-        --parcel_volume $atlas $atlas_label
+        --parcel_volume $atlas $atlas_list
     """
 }
 
@@ -292,7 +293,7 @@ process Connectivity_in_csv {
     set sid, lesion_id, file(atlas_matrices), file(matrices_w_lesion) from matrices_for_connectivity_in_csv
 
     output:
-    set sid, "*csv", "connectivity_w_lesion/*.csv"
+    set sid, "*csv", "Connectivity_w_lesion/*.csv"
 
     script:
     String matrices_list = atlas_matrices.join("\",\"")
@@ -302,7 +303,7 @@ process Connectivity_in_csv {
     import numpy as np
     import os, sys
 
-    os.mkdir("connectivity_w_lesion")
+    os.mkdir("Connectivity_w_lesion")
 
     for data in ["$matrices_list","$matrices_w_lesion"]:
       fmt='%1.8f'
@@ -311,8 +312,29 @@ process Connectivity_in_csv {
 
       curr_data = np.load(data)
       if "lesion" in data:
-        np.savetxt(os.path.join("connectivity_w_lesion/", data.replace(".npy", ".csv")), curr_data, delimiter=",", fmt=fmt)
+        np.savetxt(os.path.join("Connectivity_w_lesion/", data.replace(".npy", ".csv")), curr_data, delimiter=",", fmt=fmt)
       else:
         np.savetxt(data.replace(".npy", ".csv"), curr_data, delimiter=",", fmt=fmt)
+    """
+}
+
+
+process Visualize_Connectivity {
+    cpus 1
+    publishDir = {"${params.output_dir}/$lesion_id/$sid/Compute_Connectivity/Connectivity_w_lesion"}
+
+    input:
+    set sid, lesion_id, file(atlas_labels), file(atlas_list), file(matrices) from lesion_sc_for_visualisation
+
+    output:
+    set sid, "*.png"
+
+    script:
+    String matrices_list = matrices.join(", ").replace(',', '')
+    """
+    for matrix in "$matrices_list"; do
+        scil_visualize_connectivity.py \$matrix \${matrix/.npy/_matrix.png} --labels_list $atlas_list --name_axis \
+            --display_legend --lookup_table $atlas_labels --histogram \${matrix/.npy/_hist.png} --nb_bins 50 --exclude_zeros --axis_text_size 5 5
+    done
     """
 }
