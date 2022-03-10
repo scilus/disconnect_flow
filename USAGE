@@ -5,18 +5,10 @@ Run Disconnect pipeline
 
 USAGE
 
-nextflow run main.nf [OPTIONAL_ARGUMENTS] (--input)
+nextflow run main.nf [OPTIONAL_ARGUMENTS] (--input) (--atlas) (--tractograms)
 
 You need to provide an atlas as well as tractograms in the same space in order to build your atlas decomposition database.
-
 If T1s are provided it will registered the lesion into the atlas
-
-nextflow run main.nf \
-    --root pathTo/dataset/ \
-    --atlas pathTo/atlas_name/ \
-    --tractograms pathTo/Tractograms
-    --output_dir pathTo/output/ \
-    --resume
 
 
 DESCRIPTION
@@ -34,10 +26,11 @@ DESCRIPTION
                                            └── *lesion_02_mask.nii.gz
 
     --atlas                            Absolute path to the atlases folder
-                                       [atlasFolder] (Should be the name of the atlas used)
-                                       │── atlas_*.nii.gz
-                                       │── label_list.txt
-                                       └── *t1.nii.gz (optional, only needed if we need to register lesion into atlas space)
+                                       [atlas_name] (Should be the name of the atlas used)
+                                       │── atlas_labels.nii.gz (NIFTI image with all labels)
+                                       │── atlas_labels.txt (Json file each id label corresponds to the name of the label)
+                                       │── atlas_list.txt
+                                       └── atlas_t1.nii.gz (optional, only needed if we need to register lesion into atlas space)
 
 
     --tractograms                      Absolute path to the tractograms
@@ -53,9 +46,9 @@ OPTIONAL ARGUMENTS (current value)
                                         By default, will be in "./results_disconnectflow"
 
     --run_bet                           Run bet if your t1s are not brain extracted ($run_bet).
-    --linear_registration               If set, will choose linear registration of the lesion into the atlas space.
-    --nonlinear_registration            If set, will choose non-linear registration of the lesion into the atlas space.
 
+    --slow_registration                 If set, will choose antsRegistrationSyN.sh instead of antsRegistrationSyNQuick.sh ($slow_registration).
+    --linear_registration               If set, will choose linear registration of the lesion into the atlas space instead of non-linear registration ($linear_registration).
 
     --no_pruning                        If set, will NOT prune on length ($no_pruning)
     --no_remove_loops                   If set, will NOT remove streamlines making loops ($no_remove_loops)

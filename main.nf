@@ -6,7 +6,10 @@ if(params.help) {
     usage = file("$baseDir/USAGE")
     cpu_count = Runtime.runtime.availableProcessors()
 
-    bindings = ["output_dir":"$params.output_dir",
+    bindings = ["registration_script":"$params.registration_script",
+                "linear_registration": "$params.linear_registration",
+                "slow_registration": "$params.slow_registration",
+                "output_dir":"$params.output_dir",
                 "run_bet":"$params.run_bet",
                 "no_pruning":"$params.no_pruning",
                 "no_remove_loops":"$params.no_remove_loops",
@@ -33,9 +36,26 @@ log.info ""
 log.info "Start time: $workflow.start"
 log.info ""
 
+
 log.debug "[Command-line]"
 log.debug "$workflow.commandLine"
 log.debug ""
+
+
+log.info "Inputs"
+log.info "============================="
+log.info "Input lesions: $params.input"
+log.info "Input tractograms: $params.tractograms"
+log.info "Input atlas: $params.atlas"
+log.info ""
+
+
+log.info "Options - registration"
+log.info "============================="
+log.info "Registration strategy: $params.registration_strategy"
+log.info "Registration script: $params.registration_script"
+log.info ""
+
 
 workflow.onComplete {
     log.info "Pipeline completed at: $workflow.complete"
@@ -45,43 +65,37 @@ workflow.onComplete {
 
 
 if (params.input){
-    log.info "Input lesions: $params.input"
     root = file(params.input)
-    in_lesions = Channel.fromFilePairs("$root/**/*{$params.lesion_name*.nii.gz}",
-                                    size: 1,
-                                    maxDepth:1,
-                                    flat: true) {it.parent.name}
+    Channel.fromPath("$root/**/cavity.nii.gz",
+                     maxDepth:1)
+          .map{[it.parent.name, it]}
+          .into{lesions; lesions_for_registration; check_lesions}
+
 
     Channel.fromPath("$root/**/*t1.nii.gz",
                      maxDepth:1)
-                     .map{[it.parent.name, it]}
-                     .into{t1s_for_register; check_t1s}
+          .map{[it.parent.name, it]}
+          .into{t1s_for_register; check_t1s}
 }
 
 if (params.tractograms){
-    log.info "Input tractograms: $params.tractograms"
     tractograms = file(params.tractograms)
-    in_tractograms = Channel.fromFilePairs("$tractograms/**/*trk",
-                                           size: 1,
-                                           maxDepth: 1,
-                                           flat: true) {it.parent.name}
+    Channel.fromFilePairs("$tractograms/**/*trk",
+                          size: 1,
+                          maxDepth: 1,
+                          flat: true) {it.parent.name}
+          .into{tractograms_for_combine; check_trks}
 }
 
 if (params.atlas){
-    log.info "Input atlas: $params.atlas"
     atlas = file(params.atlas)
-    in_atlas = Channel
-      .fromFilePairs("$atlas/{atlas_labels.nii.gz,atlas_labels.txt,atlas_t1.nii.gz,atlas_list.txt}",
-                     size: 4,
-                     maxDepth: 0,
-                     flat: true) {it.parent.name}
+    Channel.fromFilePairs("$atlas/{atlas_labels.nii.gz,atlas_labels.txt,atlas_t1.nii.gz,atlas_list.txt}",
+                          size: 4,
+                          maxDepth: 0,
+                          flat: true) {it.parent.name}
+      .into{atlas_for_combine; atlas_for_registration; check_atlas}
+
 }
-
-in_atlas.into{atlas_for_combine; atlas_for_registration; check_atlas}
-
-in_lesions.into{lesions; lesions_for_registration; check_lesions}
-
-in_tractograms.into{tractograms_for_combine; check_trks}
 
 // Check Lesions
 check_lesions.count().into{check_lesions_number; check_lesions_number_compare_t1}
@@ -106,21 +120,6 @@ check_trks
 
 tractograms_for_combine.combine(atlas_for_combine)
     .set{trk_atlases_for_decompose_connectivity}
-
-
-if (params.linear_registration & params.nonlinear_registration){
-  error "Error ~ You cannot select both linear_registration and nonlinear_registration."
-}
-else if(params.linear_registration){
-  registration_strategy="-t a"
-}
-else if(params.nonlinear_registration){
-  registration_strategy="-t s"
-}
-
-check_t1s_number_for_registration.subscribe{a -> if (a > 0 &&  !params.linear_registration && !params.nonlinear_registration)
-  error "You provided t1 in order to register the lesion into the atlas space without specifying the registration strategy. Please add --linear_registration or --nonlinear_registration."
-}
 
 process README {
     cpus 1
@@ -171,7 +170,7 @@ process Register_T1 {
         scil_image_math.py convert bet/BrainExtractionMask.nii.gz ${sid}__t1_bet_mask.nii.gz --data_type uint8
         scil_image_math.py multiplication $t1 ${sid}__t1_bet_mask.nii.gz ${sid}__t1_bet.nii.gz
 
-        antsRegistrationSyN.sh -d 3 -m ${sid}__t1_bet.nii.gz -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" ${registration_strategy}
+        ${params.registration_script} -d 3 -m ${sid}__t1_bet.nii.gz -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" -t ${params.registration_strategy}
         mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
     """
     }
@@ -182,7 +181,7 @@ process Register_T1 {
         export OPENBLAS_NUM_THREADS=1
         export ANTS_RANDOM_SEED=1234
 
-        antsRegistrationSyN.sh -d 3 -m ${t1} -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" ${registration_strategy}
+        ${params.registration_script} -d 3 -m ${t1} -f ${atlas_t1} -n ${task.cpus} -o "${sid}__output" ${params.registration_strategy}
         mv ${sid}__outputWarped.nii.gz ${sid}__t1_${atlas_name}_space.nii.gz
     """
     }
@@ -206,7 +205,7 @@ process Transform_Lesions {
     script:
     """
     antsApplyTransforms -d 3 -i $lesion -r $t1_ref -o ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz -t $mat -n NearestNeighbor
-    scil_image_math.py convert ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz "${sid}__${params.lesion_name}_${atlas_name}_space_int16.nii.gz" --data_type int16
+    scil_image_math.py convert ${sid}__${params.lesion_name}_${atlas_name}_space.nii.gz ${sid}__${params.lesion_name}_${atlas_name}_space_int16.nii.gz --data_type int16
     """
 }
 
@@ -219,7 +218,7 @@ process Decompose_Connectivity {
     set sid, file(trackings), atlas_name, file(atlas), file(atlas_labels), file(atlas_list), file(atlas_t1) from trk_atlases_for_decompose_connectivity
 
     output:
-    set sid, atlas_name, file(atlas), file(atlas_labels), file(atlas_list), "${sid}_${atlas_name}__decompose.h5" into h5_for_combine_with_lesion
+    set sid, atlas_name, file(atlas), file(atlas_labels), file(atlas_list), "${sid}_${atlas_name}__decompose.h5" into h5_for_combine_with_lesion, h5_for_combine_with_lesion_echo
 
     script:
     no_pruning_arg = ""
@@ -252,7 +251,9 @@ process Decompose_Connectivity {
     """
 }
 
-h5_for_combine_with_lesion.combine(transformed_lesions)
+transformed_lesions.ifEmpty(lesions).set{lesion_for_connectivity}
+
+h5_for_combine_with_lesion.combine(lesion_for_connectivity)
   .set{h5_labels_lesion_for_compute_connectivity}
 
 process Compute_Connectivity_Lesion_without_similiarity {
